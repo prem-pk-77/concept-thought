@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindCanvas – Thought-to-Concept Mapper</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+
+    * {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .mono-font {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    html, body, #app {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #fff;
+      overflow: auto;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+    }
+
+    .glow-input {
+      background: rgba(102, 126, 234, 0.1);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      color: white;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 1em;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glow-input:focus {
+      outline: none;
+      background: rgba(102, 126, 234, 0.2);
+      border-color: rgba(102, 126, 234, 0.8);
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .glow-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .primary-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      transition: left 0.3s ease;
+    }
+
+    .primary-btn:hover::before {
+      left: 100%;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+    }
+
+    .primary-btn:active {
+      transform: translateY(0);
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .concept-tag {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+      border: 1px solid rgba(102, 126, 234, 0.5);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin: 4px 4px 4px 0;
+      color: #e0c3fc;
+    }
+
+    .idea-card {
+      animation: slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .delete-confirm {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .delete-confirm .btn-confirm {
+      background: #ef4444;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .empty-state-icon {
+      font-size: 4em;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div id="app" class="w-full h-full overflow-auto"><!-- Header -->
+   <header class="sticky top-0 z-50 glass-card mx-4 mt-4 mb-6 md:mx-auto md:max-w-5xl">
+    <div class="p-6 md:p-8">
+     <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center gap-3">
+       <div class="text-4xl">
+        🧠
+       </div>
+       <div>
+        <h1 id="app-title" class="text-2xl md:text-3xl font-bold gradient-text">MindCanvas</h1>
+        <p id="app-subtitle" class="text-sm text-slate-300 mt-1">Thought-to-Concept Mapper</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </header><!-- Main Container -->
+   <main class="px-4 pb-8 mx-auto max-w-5xl"><!-- Input Section -->
+    <section class="glass-card p-6 md:p-8 mb-6">
+     <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><span>💭</span> Capture Your Thoughts</h2>
+     <div class="space-y-4">
+      <div><label class="block text-sm font-medium text-slate-300 mb-2">Your Raw Idea</label> <textarea id="thoughtInput" placeholder="Type your raw ideas, concepts, or questions..." class="w-full glow-input resize-vertical min-h-[120px]"></textarea>
+      </div>
+      <div><label class="block text-sm font-medium text-slate-300 mb-2">Tags (optional, comma-separated)</label> <input type="text" id="tagsInput" placeholder="e.g., productivity, learning, AI" class="w-full glow-input">
+      </div>
+      <div class="flex gap-3 flex-wrap"><button id="organizeBtn" class="primary-btn"> <span class="flex items-center gap-2"> <span>✨</span> Organize Ideas </span> </button> <button id="clearBtn" class="secondary-btn"> <span class="flex items-center gap-2"> <span>🗑️</span> Clear </span> </button>
+      </div>
+     </div>
+    </section><!-- Ideas History Section -->
+    <section class="glass-card p-6 md:p-8">
+     <h2 class="text-xl font-semibold mb-6 flex items-center gap-2"><span>📚</span> Your Ideas</h2>
+     <div id="ideasContainer">
+      <div class="empty-state">
+       <div class="empty-state-icon">
+        💡
+       </div>
+       <p class="text-lg font-medium">Start capturing your thoughts!</p>
+       <p class="text-sm mt-2">Your organized ideas will appear here</p>
+      </div>
+     </div>
+    </section>
+   </main>
+  </div>
+  <script>
+    const defaultConfig = {
+      app_title: 'MindCanvas',
+      subtitle: 'Thought-to-Concept Mapper',
+      thought_placeholder: 'Type your raw ideas...',
+      primary_color: '#667eea',
+      secondary_color: '#764ba2',
+      background_color: '#0f0c29',
+      text_color: '#ffffff',
+      font_family: 'Poppins',
+      font_size: 16
+    };
+
+    let config = { ...defaultConfig };
+    let allIdeas = [];
+    let isLoading = false;
+
+    // DOM Elements
+    const elements = {
+      thoughtInput: document.getElementById('thoughtInput'),
+      tagsInput: document.getElementById('tagsInput'),
+      organizeBtn: document.getElementById('organizeBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      ideasContainer: document.getElementById('ideasContainer'),
+      appTitle: document.getElementById('app-title'),
+      appSubtitle: document.getElementById('app-subtitle')
+    };
+
+    // Initialize Data SDK
+    async function initializeDataSDK() {
+      const result = await window.dataSdk.init({
+        onDataChanged(ideas) {
+          allIdeas = ideas;
+          renderIdeas();
+        }
+      });
+
+      if (!result.isOk) {
+        console.error('Failed to initialize Data SDK:', result.error);
+      }
+    }
+
+    // Process thoughts into concepts
+    function extractConcepts(text) {
+      // Split by common delimiters
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      const concepts = sentences
+        .map(s => s.trim())
+        .filter(s => s.length > 5)
+        .slice(0, 5);
+      
+      return concepts.map(c => c.replace(/[.!?]$/, '').trim());
+    }
+
+    // Organize ideas
+    async function organizeIdeas() {
+      const thought = elements.thoughtInput.value.trim();
+      const tags = elements.tagsInput.value.trim();
+
+      if (!thought) {
+        showNotification('Please enter a thought first!', 'error');
+        return;
+      }
+
+      if (allIdeas.length >= 999) {
+        showNotification('Maximum limit of 999 ideas reached. Please delete some to add more.', 'error');
+        return;
+      }
+
+      // Show loading state
+      const originalText = elements.organizeBtn.innerHTML;
+      elements.organizeBtn.innerHTML = '<span class="flex items-center gap-2"><div class="loading-spinner"></div> Processing...</span>';
+      elements.organizeBtn.disabled = true;
+      isLoading = true;
+
+      // Simulate brief processing
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      const concepts = extractConcepts(thought);
+      const conceptsText = concepts.join(' • ');
+
+      const newIdea = {
+        thought,
+        concepts: conceptsText,
+        tags: tags,
+        created_at: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(newIdea);
+
+      if (result.isOk) {
+        elements.thoughtInput.value = '';
+        elements.tagsInput.value = '';
+        showNotification('✓ Idea saved!', 'success');
+      } else {
+        showNotification('Failed to save idea', 'error');
+      }
+
+      elements.organizeBtn.innerHTML = originalText;
+      elements.organizeBtn.disabled = false;
+      isLoading = false;
+    }
+
+    // Render ideas
+    function renderIdeas() {
+      if (allIdeas.length === 0) {
+        elements.ideasContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">💡</div>
+            <p class="text-lg font-medium">Start capturing your thoughts!</p>
+            <p class="text-sm mt-2">Your organized ideas will appear here</p>
+          </div>
+        `;
+        return;
+      }
+
+      elements.ideasContainer.innerHTML = allIdeas.map((idea, idx) => `
+        <div class="idea-card glass-card p-5 md:p-6 mb-4 group">
+          <div class="flex justify-between items-start gap-4 mb-3">
+            <div class="flex-1">
+              <p class="text-sm text-slate-400 mb-1">
+                ${new Date(idea.created_at).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </p>
+              <p class="text-white font-medium leading-relaxed">${idea.thought}</p>
+            </div>
+            <button 
+              onclick="deleteIdea('${idea.__backendId}')"
+              class="secondary-btn opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              title="Delete idea"
+            >
+              🗑️
+            </button>
+          </div>
+
+          ${idea.concepts ? `
+            <div class="mb-3 pt-3 border-t border-slate-600">
+              <p class="text-xs text-slate-400 mb-2">Extracted Concepts:</p>
+              <p class="text-sm text-purple-200">${idea.concepts}</p>
+            </div>
+          ` : ''}
+
+          ${idea.tags ? `
+            <div class="flex flex-wrap gap-1">
+              ${idea.tags.split(',').map(tag => `
+                <span class="concept-tag">${tag.trim()}</span>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    // Delete idea with confirmation
+    async function deleteIdea(id) {
+      const idea = allIdeas.find(i => i.__backendId === id);
+      if (!idea) return;
+
+      const button = event.target.closest('button');
+      const card = button.closest('.idea-card');
+      const originalHTML = button.innerHTML;
+
+      // Show confirmation state
+      card.classList.add('delete-confirm');
+      button.innerHTML = '✓ Confirm Delete';
+      button.classList.add('btn-confirm');
+
+      let confirmed = false;
+
+      const confirmHandler = async () => {
+        confirmed = true;
+        button.style.opacity = '0.5';
+        button.disabled = true;
+        button.innerHTML = '<div class="loading-spinner"></div>';
+
+        const result = await window.dataSdk.delete(idea);
+
+        if (!result.isOk) {
+          showNotification('Failed to delete idea', 'error');
+          button.style.opacity = '1';
+          button.disabled = false;
+          button.innerHTML = originalHTML;
+          card.classList.remove('delete-confirm');
+          button.classList.remove('btn-confirm');
+          button.removeEventListener('click', confirmHandler);
+        }
+      };
+
+      button.addEventListener('click', confirmHandler);
+
+      // Reset after 5 seconds if not confirmed
+      setTimeout(() => {
+        if (!confirmed) {
+          card.classList.remove('delete-confirm');
+          button.classList.remove('btn-confirm');
+          button.innerHTML = originalHTML;
+          button.removeEventListener('click', confirmHandler);
+        }
+      }, 5000);
+    }
+
+    // Clear input
+    function clearInput() {
+      elements.thoughtInput.value = '';
+      elements.tagsInput.value = '';
+      elements.thoughtInput.focus();
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+      // Create a temporary toast notification
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: ${type === 'error' ? 'rgba(239, 68, 68, 0.9)' : type === 'success' ? 'rgba(34, 197, 94, 0.9)' : 'rgba(102, 126, 234, 0.9)'};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 10px;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slide-in 0.3s ease;
+        max-width: 300px;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slide-in 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Apply config
+    function applyConfig(cfg) {
+      elements.appTitle.textContent = cfg.app_title || defaultConfig.app_title;
+      elements.appSubtitle.textContent = cfg.subtitle || defaultConfig.subtitle;
+      elements.thoughtInput.placeholder = cfg.thought_placeholder || defaultConfig.thought_placeholder;
+
+      const fontFamily = cfg.font_family || defaultConfig.font_family;
+      const fontStack = 'Poppins, sans-serif';
+      document.documentElement.style.fontFamily = `${fontFamily}, ${fontStack}`;
+
+      const baseSize = cfg.font_size || defaultConfig.font_size;
+      document.documentElement.style.fontSize = `${baseSize}px`;
+    }
+
+    // Event Listeners
+    elements.organizeBtn.addEventListener('click', organizeIdeas);
+    elements.clearBtn.addEventListener('click', clearInput);
+
+    elements.thoughtInput.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        organizeIdeas();
+      }
+    });
+
+    // Initialize Element SDK
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (newConfig) => {
+        config = { ...defaultConfig, ...newConfig };
+        applyConfig(config);
+      },
+      mapToCapabilities: (cfg) => ({
+        recolorables: [
+          {
+            get: () => cfg.primary_color || defaultConfig.primary_color,
+            set: (value) => {
+              cfg.primary_color = value;
+              window.elementSdk.setConfig({ primary_color: value });
+            }
+          },
+          {
+            get: () => cfg.secondary_color || defaultConfig.secondary_color,
+            set: (value) => {
+              cfg.secondary_color = value;
+              window.elementSdk.setConfig({ secondary_color: value });
+            }
+          },
+          {
+            get: () => cfg.background_color || defaultConfig.background_color,
+            set: (value) => {
+              cfg.background_color = value;
+              window.elementSdk.setConfig({ background_color: value });
+            }
+          },
+          {
+            get: () => cfg.text_color || defaultConfig.text_color,
+            set: (value) => {
+              cfg.text_color = value;
+              window.elementSdk.setConfig({ text_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => cfg.font_family || defaultConfig.font_family,
+          set: (value) => {
+            cfg.font_family = value;
+            window.elementSdk.setConfig({ font_family: value });
+          }
+        },
+        fontSizeable: {
+          get: () => cfg.font_size || defaultConfig.font_size,
+          set: (value) => {
+            cfg.font_size = value;
+            window.elementSdk.setConfig({ font_size: value });
+          }
+        }
+      }),
+      mapToEditPanelValues: (cfg) => new Map([
+        ['app_title', cfg.app_title || defaultConfig.app_title],
+        ['subtitle', cfg.subtitle || defaultConfig.subtitle],
+        ['thought_placeholder', cfg.thought_placeholder || defaultConfig.thought_placeholder]
+      ])
+    });
+
+    // Initialize
+    applyConfig(config);
+    initializeDataSDK();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c90640945009f61',t:'MTc3MDI3MzM1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
